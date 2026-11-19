@@ -146,6 +146,7 @@ ${["eletrico:#fbf3db:#e0a800", "hibrido:#deeee6:#11864c", "potente:#fae3e0:#d83a
 .mc-ph{position:relative;aspect-ratio:16/9;background:radial-gradient(120% 90% at 50% 100%,#eef2f8 0,#f7f9fc 60%,#fff 100%);display:grid;place-items:center}
 .mc-ph img{width:100%;height:100%;object-fit:contain}
 .nov{left:8px;top:8px;font-size:9px;padding:2px 6px;border-radius:5px}
+.mc-selos{position:absolute;left:8px;top:8px;z-index:1;display:flex;flex-wrap:wrap;gap:4px;max-width:calc(100% - 40px)}.mc-selos .nov{position:static;letter-spacing:.05em;padding:2px 5px}.nov.pv{background:#b45309}
 .mc-sem{font-size:20px}
 .mc-tx{display:flex;flex-direction:column;gap:2px;padding:12px 14px 14px;flex:1}
 .mc-mk{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
@@ -359,10 +360,14 @@ const TIPO_NOV = { carro_novo: "Carro novo lançado", nova_geracao: "Nova geraç
 export const ILUS = '<span class="ilus" role="img" aria-label="Imagem ilustrativa"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 7.2v4M8 4.9v.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>';
 export const seloNovidade = (l) => (l ? `<span class="nov" title="${esc(`${TIPO_NOV[l.tipo] || "Lançado"} em ${l.data_precisao === "mes" ? String(l.lancado_em).slice(5, 7) + "/" + String(l.lancado_em).slice(0, 4) : dataBr(l.lancado_em)}`)}">Novo</span>` : "");
 
+/* pré-venda: selo "Novo" (se não houver lançamento registrado) + "Pré-venda", lado a lado sobre a foto */
+const SELO_PV = '<span class="nov pv" title="Em pré-venda: já dá para reservar; as entregas ainda não começaram">Pré-venda</span>';
+export const selosFoto = (l, pv) => (l || pv ? `<span class="mc-selos">${l ? seloNovidade(l) : '<span class="nov" title="Em pré-venda">Novo</span>'}${pv ? SELO_PV : ""}</span>` : "");
+
 export function cartao(m, { de, extra, href } = {}) {
   const preco = de ?? m.precoMin;
-  const sub = [m.carroc, m.combs.slice(0, 2).join(" ou "), m.aVenda ? pl(m.versoes.length, "versão", "versões") : STATUS[m.breve[0]?.status] || ""].filter(Boolean).join(" · ");
-  return `<li><a class="mc" href="${href || m.url}"><span class="mc-ph">${fotoTag(m, 360, "(max-width:520px) 92vw, 260px") || `<span class="mc-sem">${esc(m.nome)}</span>`}${m.foto ? ILUS : ""}${seloNovidade(m.novidade)}</span><span class="mc-tx"><span class="mc-mk">${esc(m.marca)}</span><span class="mc-nm">${esc(m.nome)}</span><span class="mc-sub">${esc(sub)}</span>${extra ? `<span class="mc-x">${esc(extra)}</span>` : ""}<span class="mc-pr">${preco && Number.isFinite(preco) ? `<small>a partir de</small>${reais(preco)}` : "<small>preço ainda não divulgado</small>"}</span></span></a></li>`;
+  const sub = [m.carroc, m.combs.slice(0, 2).join(" ou "), m.preVenda ? pl(m.versoes.length, "versão em pré-venda", "versões em pré-venda") : m.aVenda ? pl(m.versoes.length, "versão", "versões") : STATUS[m.breve[0]?.status] || ""].filter(Boolean).join(" · ");
+  return `<li><a class="mc" href="${href || m.url}"><span class="mc-ph">${fotoTag(m, 360, "(max-width:520px) 92vw, 260px") || `<span class="mc-sem">${esc(m.nome)}</span>`}${m.foto ? ILUS : ""}${selosFoto(m.novidade, m.preVenda)}</span><span class="mc-tx"><span class="mc-mk">${esc(m.marca)}</span><span class="mc-nm">${esc(m.nome)}</span><span class="mc-sub">${esc(sub)}</span>${extra ? `<span class="mc-x">${esc(extra)}</span>` : ""}<span class="mc-pr">${preco && Number.isFinite(preco) ? `<small>a partir de</small>${reais(preco)}` : "<small>preço ainda não divulgado</small>"}</span></span></a></li>`;
 }
 
 const logoMarca = (b, w = 64) => `<span class="bc-lg">${b.logo ? `<img src="${imagem(b.logo, w * 2)}" alt="" width="${w}" height="${w}" loading="lazy">` : esc(b.nome.slice(0, 2).toUpperCase())}</span>`;
@@ -394,7 +399,7 @@ function filtroPreco({ acao, de, ate, versoes, titulo = "Buscar por preço" }) {
 /* card de uma versão (na lista com "Ver todas as versões"): leva à tabela de versões do carro */
 function cartaoVersao(m, v) {
   const sub = [v.motor || null, v.cambio || null].filter(Boolean).join(" · ");
-  return `<li><a class="mc" href="${m.url}#versoes"><span class="mc-ph">${fotoTag(m, 360, "(max-width:520px) 46vw, 260px") || `<span class="mc-sem">${esc(m.nome)}</span>`}${m.foto ? ILUS : ""}${seloNovidade(v.novidade)}</span><span class="mc-tx"><span class="mc-mk">${esc(m.marca)}</span><span class="mc-nm">${esc(m.nome)}</span><span class="mc-sub">${esc(v.nome || m.nome)}${v.ano ? ` · ${v.ano}` : ""}</span>${sub ? `<span class="mc-sub">${esc(sub)}</span>` : ""}<span class="mc-pr">${v.preco ? reais(v.preco) : "<small>preço não divulgado</small>"}</span></span></a></li>`;
+  return `<li><a class="mc" href="${m.url}#versoes"><span class="mc-ph">${fotoTag(m, 360, "(max-width:520px) 46vw, 260px") || `<span class="mc-sem">${esc(m.nome)}</span>`}${m.foto ? ILUS : ""}${selosFoto(v.novidade, v.status === "pre_order")}</span><span class="mc-tx"><span class="mc-mk">${esc(m.marca)}</span><span class="mc-nm">${esc(m.nome)}</span><span class="mc-sub">${esc(v.nome || m.nome)}${v.ano ? ` · ${v.ano}` : ""}</span>${sub ? `<span class="mc-sub">${esc(sub)}</span>` : ""}<span class="mc-pr">${v.preco ? reais(v.preco) : "<small>preço não divulgado</small>"}</span></span></a></li>`;
 }
 
 /* lista longa: os primeiros cards já vêm na página e os outros aparecem conforme a pessoa desce */
@@ -503,7 +508,7 @@ ${temTracao ? `<td data-l="Tração">${v.tracao ? esc(v.tracao) : '<span class="
 <div>
 <a class="hero-mk" href="${marca.url}">${marca.logo ? `<span><img src="${imagem(marca.logo, 64)}" alt="" width="22" height="22"></span>` : ""}${esc(marca.nome)}</a>
 <h1>${esc(nomeAno)}</h1>
-<p class="hero-sub">${esc([m.carroc, lista(m.combs), m.aVenda ? pl(m.versoes.length, "versão à venda", "versões à venda") : statusTxt].filter(Boolean).join(" · "))}</p>
+<p class="hero-sub">${esc([m.carroc, lista(m.combs), m.preVenda ? pl(m.versoes.length, "versão em pré-venda", "versões em pré-venda") : m.aVenda ? pl(m.versoes.length, "versão à venda", "versões à venda") : statusTxt].filter(Boolean).join(" · "))}</p>
 <div class="preco"><b>${faixa}</b><small>${esc(rotuloPreco(m.versoes))}</small></div>
 ${selos}
 <div class="acoes">${m.aVenda ? `<a class="btn pri" href="/?carro=${encodeURIComponent(m.id)}">${ROLETA}Ver carros do mesmo preço</a>` : ""}${m.aVenda ? `<a class="btn" href="/comparar/${m.id}">${COMPARAR_ICO}Comparar com outro carro</a>` : ""}${marca.site ? `<a class="btn" href="${esc(marca.site)}" target="_blank" rel="noopener">Site da ${esc(marca.nome)}${SETA}</a>` : ""}</div>

@@ -15,7 +15,7 @@ const SO = process.env.ESPACOS_SO || '';      // para rodar só uma parte: ESPAC
 const CSS = process.env.ESPACOS_CSS || '';    // para provar que a verificação pega um erro: ESPACOS_CSS=".q-vh{margin-top:0}"
 
 const TELAS = [['celular 390', { width: 390, height: 844 }], ['celular 360', { width: 360, height: 740 }], ['computador', { width: 1280, height: 900 }]];
-const PAGINAS = ['/', '/admin.html', '/novidades', '/carros', '/carros/jeep', '/carros/jeep/compass', '/comparar/jeep-compass-vs-toyota-corolla-cross', '/comparar', '/noticias', '/suvs', '/carros-ate-150-mil', '/contato'];
+const PAGINAS = ['/', '/admin.html', '/novidades', '/carros', '/carros/jeep', '/carros/jeep/compass', '/carros/renault', '/carros/renault/niagara', '/comparar/jeep-compass-vs-toyota-corolla-cross', '/comparar', '/noticias', '/suvs', '/carros-ate-150-mil', '/contato'];
 
 /* estados da página inicial e da busca do topo das outras páginas */
 const ESTADOS = [
@@ -28,6 +28,12 @@ const ESTADOS = [
   ['/', 'cartão com o selo mais longo', async (p) => { await p.evaluate(() => { const c = CARS.filter((x) => typeof isBlack === 'function' && isBlack(x)).sort((a, b) => b.bk.length - a.bk.length)[0]; c && goToCar(c, true, true); }); await p.waitForTimeout(2500); }],
   ['/', 'cartão com Oferta e Novo', async (p) => { await p.evaluate(() => { const c = CARS.find((x) => typeof isOffer === 'function' && isOffer(x) && isNew(x)); c && goToCar(c, true, true); }); await p.waitForTimeout(2500); }],
   ['/', 'busca "rampage" (Black)', async (p) => { await abreBusca(p, 'rampage'); }],
+  /* pré-venda: selos Novo + Pré-venda no cartão (de preferência um que também tenha Oferta), na ficha, na busca e no filtro Novos */
+  ['/', 'cartão em pré-venda', async (p) => { await p.evaluate(() => { const c = CARS.find((x) => x.pv && isOffer(x)) || CARS.find((x) => x.pv); c && goToCar(c, true, true); }); await p.waitForTimeout(2500); }],
+  ['/', 'ficha em pré-venda', async (p) => { await p.evaluate(() => { const c = CARS.find((x) => x.pv); c && openInfo(c.id); }); await p.waitForTimeout(900); }],
+  ['/', 'busca "niagara" (pré-venda)', async (p) => { await abreBusca(p, 'niagara'); }],
+  ['/', 'busca "lyriq" (pré-venda, uma versão)', async (p) => { await abreBusca(p, 'lyriq'); }],
+  ['/', 'filtro Novos', async (p) => { await p.evaluate(() => { const q = document.querySelector('#quick [data-novo]'); q && q.click(); }); await p.waitForTimeout(1800); }],
   ['/', 'menu aberto', async (p) => { await p.click('#mnBtn'); await p.waitForTimeout(700); }],
   ['/', 'menu com grupo aberto', async (p) => { await p.click('#mnBtn'); await p.waitForTimeout(700); await p.evaluate(() => document.querySelectorAll('#menuP details').forEach((d) => { d.open = true; })); await p.waitForTimeout(200); }],
   ['/carros/jeep/compass', 'menu aberto (página do carro)', async (p) => { await p.click('#mnBtn'); await p.waitForTimeout(700); }],
