@@ -113,7 +113,8 @@ async function montar() {
       specs: v.specs && typeof v.specs === "object" ? v.specs : null,
       precos: precosPorVersao.get(r.i) || [], mudancas: mudancasPorVersao.get(r.i) || [],
     };
-    (versao.status === "on_sale" ? m.versoes : m.breve).push(versao);
+    // pré-venda já entra no site (com o selo "Pré-venda"); só os anunciados ficam em "em breve"
+    (versao.status === "on_sale" || versao.status === "pre_order" ? m.versoes : m.breve).push(versao);
   }
 
   const porPreco = (a, b) => (a.preco ?? Infinity) - (b.preco ?? Infinity) || a.nome.localeCompare(b.nome, "pt-BR");
@@ -121,6 +122,7 @@ async function montar() {
     m.versoes.sort(porPreco); m.breve.sort(porPreco);
     const todas = m.versoes.length ? m.versoes : m.breve;
     m.aVenda = m.versoes.length > 0;
+    m.preVenda = m.aVenda && m.versoes.every((v) => v.status === "pre_order");
     m.ano = todas.reduce((y, v) => Math.max(y, v.ano || 0), 0) || null;
     const precos = m.versoes.map((v) => v.preco).filter(Boolean);
     m.precoMin = precos.length ? Math.min(...precos) : null;
